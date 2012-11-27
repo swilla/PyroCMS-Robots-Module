@@ -67,8 +67,27 @@ class Module_Robots extends Module {
 				PRIMARY KEY (`robots_id`, `sites_id`) )
 			ENGINE = InnoDB;");
 		
-		$this->db->query("INSERT INTO `core_robots` (robots_id, sites_id, site_ref, txt) VALUES (null,(SELECT `id` FROM `core_sites` WHERE ref='" . $this->site_ref . "'), '" . $this->site_ref . "', '" . $txt . "');");
-		return TRUE;
+		if(!empty($this->site_ref))
+		{
+			$this->db->query("INSERT INTO `core_robots` (robots_id, sites_id, site_ref, txt) VALUES (null,(SELECT `id` FROM `core_sites` WHERE ref='" . $this->site_ref . "'), '" . $this->site_ref . "', '" . $txt . "');");
+			return TRUE;
+		}else{
+			//Get List of Sites
+			$sites = $this->db->query("SELECT * FROM `core_sites`")->result();
+
+			foreach($sites as $site)
+			{
+				$exists = $this->db->query("SELECT * FROM `core_robots` WHERE site_ref = '{$site->ref}'")->row();
+
+				if(empty($exists))
+				{
+					$this->db->query("INSERT INTO `core_robots` (robots_id, sites_id, site_ref, txt) VALUES (null,(SELECT `id` FROM `core_sites` WHERE ref='" . $site->ref . "'), '" . $site->ref . "', '" . $txt . "');");
+				}
+			}
+			return true;
+		}
+
+		return false;
 	}
 
 	public function uninstall()
